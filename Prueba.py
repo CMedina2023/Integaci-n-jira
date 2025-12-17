@@ -27,6 +27,7 @@ try:
     termino = "Automatización con Python"
     busqueda.send_keys(termino)
     busqueda.send_keys(Keys.RETURN)
+    print(f"retultado de la busqueda {termino}")
 
     # Esperar unos segundos para ver los resultados
     time.sleep(5)
