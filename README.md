@@ -197,42 +197,45 @@ name: Selenium Tests
 on:
   push:
     branches:
-      - main
+      - master
       - develop
       - 'feature/**'
   pull_request:
     branches:
-      - main
+      - master
       - develop
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       # 1. Descargar el código
       - name: Checkout código
         uses: actions/checkout@v3
-      
+
       # 2. Configurar Python
       - name: Configurar Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
-      # 3. Instalar dependencias
-      - name: Instalar dependencias
+
+      # 3. Instalar dependencias y Chrome
+      - name: Instalar todo
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
-      # 4. Instalar Chrome y ChromeDriver
-      - name: Instalar Chrome
-        uses: browser-actions/setup-chrome@latest
-        with:
-          chrome-version: stable
-      
-      # 5. Extraer Issue Key del commit
+          pip install selenium==4.15.2
+          
+          # Instalar Chrome
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          
+          # Verificar versión de Chrome
+          google-chrome --version
+
+      # 4. Extraer Issue Key del commit
       - name: Extraer Jira Issue Key
         id: jira-key
         run: |
@@ -244,8 +247,8 @@ jobs:
           else
             echo "✓ Issue Key encontrado: $ISSUE_KEY"
           fi
-      
-      # 6. Login en Jira
+
+      # 5. Login en Jira
       - name: Login en Jira
         if: steps.jira-key.outputs.issue_key != ''
         uses: atlassian/gajira-login@v3
@@ -253,41 +256,28 @@ jobs:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-      
-      # 7. Marcar como "En Progreso" en Jira
-      - name: Actualizar Jira - En Progreso
-        if: steps.jira-key.outputs.issue_key != ''
-        continue-on-error: true
-        uses: atlassian/gajira-transition@v3
-        with:
-          issue: ${{ steps.jira-key.outputs.issue_key }}
-          transition: 'In Progress'
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-      
-      # 8. Ejecutar las pruebas de Selenium
+
+      # 6. Ejecutar las pruebas de Selenium
       - name: Ejecutar pruebas de Selenium
         id: tests
         run: |
           cd tests
           python Prueba.py
         continue-on-error: true
-      
-      # 9. Actualizar estado en Jira según resultado
-      - name: Actualizar Jira - Estado Final
-        if: steps.jira-key.outputs.issue_key != ''
+
+      # 7. Marcar como DONE solo si las pruebas PASAN
+      - name: Marcar como Done
+        if: steps.jira-key.outputs.issue_key != '' && steps.tests.outcome == 'success'
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue_key }}
-          transition: ${{ steps.tests.outcome == 'success' && 'Done' || 'To Do' }}
+          transition: 'finalizado'
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-      
-      # 10. Agregar comentario con resultado en Jira
+
+      # 8. Agregar comentario con resultado en Jira
       - name: Comentar resultado en Jira
         if: steps.jira-key.outputs.issue_key != ''
         uses: atlassian/gajira-comment@v3
@@ -309,8 +299,8 @@ jobs:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-      
-      # 11. Mostrar resultado en consola
+
+      # 9. Mostrar resultado en consola
       - name: Resultado Final
         if: always()
         run: |
