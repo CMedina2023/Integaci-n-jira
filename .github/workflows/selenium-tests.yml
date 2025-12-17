@@ -26,18 +26,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      # 3. Instalar Chrome y configurar
-      - name: Setup Chrome
-        uses: browser-actions/setup-chrome@v1
-
-      # 4. Instalar dependencias
-      - name: Instalar dependencias
+      # 3. Instalar dependencias y Chrome
+      - name: Instalar todo
         run: |
           python -m pip install --upgrade pip
-          pip install selenium==4.16.0
-          pip install webdriver-manager==4.0.1
+          pip install selenium==4.15.2
+          
+          # Instalar Chrome
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          
+          # Verificar versión de Chrome
+          google-chrome --version
 
-      # 5. Extraer Issue Key del commit
+      # 4. Extraer Issue Key del commit
       - name: Extraer Jira Issue Key
         id: jira-key
         run: |
@@ -50,7 +54,7 @@ jobs:
             echo "✓ Issue Key encontrado: $ISSUE_KEY"
           fi
 
-      # 6. Login en Jira
+      # 5. Login en Jira
       - name: Login en Jira
         if: steps.jira-key.outputs.issue_key != ''
         uses: atlassian/gajira-login@v3
@@ -59,7 +63,7 @@ jobs:
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      # 7. Marcar como "IN PROGRESS" en Jira
+      # 6. Marcar como "IN PROGRESS" en Jira
       - name: Actualizar Jira - Trabajando
         if: steps.jira-key.outputs.issue_key != ''
         continue-on-error: true
@@ -72,7 +76,7 @@ jobs:
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      # 8. Ejecutar las pruebas de Selenium
+      # 7. Ejecutar las pruebas de Selenium
       - name: Ejecutar pruebas de Selenium
         id: tests
         run: |
@@ -80,13 +84,27 @@ jobs:
           python Prueba.py
         continue-on-error: true
 
-      # 9. Actualizar estado en Jira según resultado (usar IDs)
-      - name: Actualizar Jira - Estado Final
-        if: steps.jira-key.outputs.issue_key != ''
+      # 8. Actualizar estado en Jira - Solo si PASA
+      - name: Marcar como Finalizado (si pasa)
+        if: steps.jira-key.outputs.issue_key != '' && steps.tests.outcome == 'success'
+        continue-on-error: true
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue_key }}
-          transition: ${{ steps.tests.outcome == 'success' && '3' || '13' }}
+          transition: '3'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      # 9. Regresar a TO DO - Solo si FALLA
+      - name: Regresar a To Do (si falla)
+        if: steps.jira-key.outputs.issue_key != '' && steps.tests.outcome == 'failure'
+        continue-on-error: true
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: ${{ steps.jira-key.outputs.issue_key }}
+          transition: '13'
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}

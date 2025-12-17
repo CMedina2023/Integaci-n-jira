@@ -5,7 +5,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 import time
 import sys
 
@@ -15,7 +14,7 @@ def setup_driver():
     chrome_options = Options()
 
     # Opciones necesarias para ejecutar en GitHub Actions
-    chrome_options.add_argument('--headless')  # Ejecutar sin interfaz gráfica
+    chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
@@ -26,15 +25,18 @@ def setup_driver():
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
 
-    # User agent más actualizado
+    # User agent actualizado
     chrome_options.add_argument(
         'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
 
-    # Crear el servicio con ChromeDriver
-    service = Service(ChromeDriverManager().install())
-
-    # Inicializar el driver
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    # Usar Chrome sin especificar Service (GitHub Actions ya tiene chromedriver en PATH)
+    try:
+        driver = webdriver.Chrome(options=chrome_options)
+    except Exception as e:
+        print(f"❌ Error al iniciar Chrome: {e}")
+        # Intentar con service explícito
+        service = Service('/usr/bin/chromedriver')
+        driver = webdriver.Chrome(service=service, options=chrome_options)
 
     # Ocultar propiedades de webdriver
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
