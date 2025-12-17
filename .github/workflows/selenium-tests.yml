@@ -63,20 +63,7 @@ jobs:
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      # 6. Marcar como "IN PROGRESS" en Jira
-      - name: Actualizar Jira - Trabajando
-        if: steps.jira-key.outputs.issue_key != ''
-        continue-on-error: true
-        uses: atlassian/gajira-transition@v3
-        with:
-          issue: ${{ steps.jira-key.outputs.issue_key }}
-          transition: 'trabajando'
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-
-      # 7. Ejecutar las pruebas de Selenium
+      # 6. Ejecutar las pruebas de Selenium
       - name: Ejecutar pruebas de Selenium
         id: tests
         run: |
@@ -84,10 +71,9 @@ jobs:
           python Prueba.py
         continue-on-error: true
 
-      # 8. Actualizar estado en Jira - Solo si PASA
-      - name: Marcar como Finalizado (si pasa)
+      # 7. Marcar como DONE solo si las pruebas PASAN
+      - name: Marcar como Done
         if: steps.jira-key.outputs.issue_key != '' && steps.tests.outcome == 'success'
-        continue-on-error: true
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue_key }}
@@ -97,20 +83,7 @@ jobs:
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      # 9. Regresar a TO DO - Solo si FALLA
-      - name: Regresar a To Do (si falla)
-        if: steps.jira-key.outputs.issue_key != '' && steps.tests.outcome == 'failure'
-        continue-on-error: true
-        uses: atlassian/gajira-transition@v3
-        with:
-          issue: ${{ steps.jira-key.outputs.issue_key }}
-          transition: '13'
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-
-      # 10. Agregar comentario con resultado en Jira
+      # 8. Agregar comentario con resultado en Jira
       - name: Comentar resultado en Jira
         if: steps.jira-key.outputs.issue_key != ''
         uses: atlassian/gajira-comment@v3
@@ -133,7 +106,7 @@ jobs:
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      # 11. Mostrar resultado en consola
+      # 9. Mostrar resultado en consola
       - name: Resultado Final
         if: always()
         run: |
