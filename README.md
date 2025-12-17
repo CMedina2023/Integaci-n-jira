@@ -653,34 +653,6 @@ def test_my_application():
     finally:
         driver.quit()
 ```
-
----
-
-### 💡 Recomendación Final
-
-**Para aprender y probar la integración, usa la OPCIÓN A (DuckDuckGo)** porque:
-- ✅ No tiene CAPTCHA
-- ✅ Funciona de manera consistente
-- ✅ Perfecto para CI/CD
-- ✅ Resultados confiables
-
-**Evita usar Google** para pruebas automatizadas porque:
-- ❌ CAPTCHA frecuente
-- ❌ Bloquea IPs de servidores (como GitHub Actions)
-- ❌ Viola sus términos de servicio
-- ❌ Resultados inconsistentes
-
-Una vez que la integración funcione con DuckDuckGo, puedes adaptarla para probar **tu propia aplicación web**, que es el caso de uso real de Selenium.
-
-**Cambios importantes**:
-- ✅ Agregado modo `--headless` para ejecutar sin interfaz gráfica
-- ✅ Uso de `webdriver_manager` para instalar ChromeDriverManager automáticamente
-- ✅ Código de salida (`sys.exit`) para indicar éxito/fallo
-- ✅ Mensajes claros en consola para debugging
-- ✅ Anti-detección de bots mejorada
-- ✅ Esperas explícitas con WebDriverWait
-- ✅ Manejo de excepciones robusto
-
 ---
 
 ### 2.7: Configurar Transiciones en Jira (Opcional pero Recomendado)
@@ -1279,4 +1251,3 @@ tree -L 3 -I 'node_modules|__pycache__'
 
 **¡Felicitaciones! Has completado la configuración completa de automatización de pruebas con Selenium, GitHub Actions y Jira.** 🎉
 
-Si tienes dudas o encuentras problemas, revisa la sección de [Solución de Problemas](#4-solución-de-problemas).
