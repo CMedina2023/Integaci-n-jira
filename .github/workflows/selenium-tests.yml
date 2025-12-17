@@ -3,12 +3,12 @@ name: Selenium Tests
 on:
   push:
     branches:
-      - master
+      - main
       - develop
       - 'feature/**'
   pull_request:
     branches:
-      - master
+      - main
       - develop
 
 jobs:
@@ -26,17 +26,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      # 3. Instalar dependencias
+      # 3. Instalar Chrome y configurar
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      # 4. Instalar dependencias
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # 4. Instalar Chrome y ChromeDriver
-      - name: Instalar Chrome
-        uses: browser-actions/setup-chrome@latest
-        with:
-          chrome-version: stable
+          pip install selenium==4.16.0
+          pip install webdriver-manager==4.0.1
 
       # 5. Extraer Issue Key del commit
       - name: Extraer Jira Issue Key
@@ -61,7 +60,7 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
       # 7. Marcar como "IN PROGRESS" en Jira
-      - name: Actualizar Jira - Trabajando (In Progress)
+      - name: Actualizar Jira - Trabajando
         if: steps.jira-key.outputs.issue_key != ''
         continue-on-error: true
         uses: atlassian/gajira-transition@v3
@@ -81,7 +80,7 @@ jobs:
           python Prueba.py
         continue-on-error: true
 
-      # 9. Actualizar estado en Jira según resultado
+      # 9. Actualizar estado en Jira según resultado (usar IDs)
       - name: Actualizar Jira - Estado Final
         if: steps.jira-key.outputs.issue_key != ''
         uses: atlassian/gajira-transition@v3
