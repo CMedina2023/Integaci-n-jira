@@ -77,7 +77,7 @@ jobs:
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue_key }}
-          transition: '3'
+          transition: 'finalizado'
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
