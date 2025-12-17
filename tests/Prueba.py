@@ -55,6 +55,7 @@ def test_duckduckgo_search():
         driver.get("https://duckduckgo.com")
         print("✓ Página de DuckDuckGo cargada")
         time.sleep(2)
+        print("Ejecutado")
 
         # 2. Localizar la barra de búsqueda
         wait = WebDriverWait(driver, 10)
