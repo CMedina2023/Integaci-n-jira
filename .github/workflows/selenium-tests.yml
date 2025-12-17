@@ -3,12 +3,12 @@ name: Selenium Tests
 on:
   push:
     branches:
-      - master
+      - main
       - develop
       - 'feature/**'
   pull_request:
     branches:
-      - master
+      - main
       - develop
 
 jobs:
@@ -60,8 +60,8 @@ jobs:
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      # 7. Marcar como "En Progreso" en Jira
-      - name: Actualizar Jira - En Progreso
+      # 7. Marcar como "IN PROGRESS" en Jira
+      - name: Actualizar Jira - Trabajando (In Progress)
         if: steps.jira-key.outputs.issue_key != ''
         continue-on-error: true
         uses: atlassian/gajira-transition@v3
@@ -76,9 +76,7 @@ jobs:
       # 8. Ejecutar las pruebas de Selenium
       - name: Ejecutar pruebas de Selenium
         id: tests
-        run: |
-          cd tests
-          python Prueba.py
+        run: python Prueba.py
         continue-on-error: true
 
       # 9. Actualizar estado en Jira según resultado
@@ -87,7 +85,7 @@ jobs:
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.jira-key.outputs.issue_key }}
-          transition: ${{ steps.tests.outcome == 'success' && 'finalizado' || 'Por hacer' }}
+          transition: ${{ steps.tests.outcome == 'success' && 'finalizado' || 'trabajando' }}
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
