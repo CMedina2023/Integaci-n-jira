@@ -76,7 +76,9 @@ jobs:
       # 8. Ejecutar las pruebas de Selenium
       - name: Ejecutar pruebas de Selenium
         id: tests
-        run: python Prueba.py
+        run: |
+          cd tests
+          python Prueba.py
         continue-on-error: true
 
       # 9. Actualizar estado en Jira según resultado
