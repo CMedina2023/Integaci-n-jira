@@ -23,40 +23,49 @@ pipeline {
 post {
         success {
             script {
-                echo '✅ Pruebas exitosas. Iniciando conexión con GitHub...'
+                echo '✅ Pruebas exitosas. Analizando mensaje para múltiples tickets...'
 
+                // 1. Obtenemos el mensaje
                 def commitMsg = bat(returnStdout: true, script: '@git log -1 --pretty=%%B').trim()
 
-                def matcher = (commitMsg =~ /[A-Z]+-[0-9]+/)
-                def JIRA_ISSUE = null
+                // 2. BUSCAR TODOS LOS TICKETS (findAll devuelve una lista)
+                // .unique() sirve para que si escribes IN-11 dos veces, solo lo mande una vez.
+                def issues = commitMsg.findAll(/[A-Z]+-[0-9]+/).unique()
 
-                if (matcher) {
-                    JIRA_ISSUE = matcher[0]
-                }
-                matcher = null
+                if (issues) {
+                    echo "🎫 Tickets encontrados: ${issues}"
 
-                if (JIRA_ISSUE) {
-                    echo "🎫 Ticket detectado: ${JIRA_ISSUE}"
+                    // 3. RECORREMOS LA LISTA (Bucle)
+                    issues.each { issueKey ->
+                        echo "🚀 Enviando reporte para: ${issueKey}"
 
-                    def payloadContent = """
-                    {
-                      "event_type": "jenkins-test-finished",
-                      "client_payload": {
-                        "jira_issue": "${JIRA_ISSUE}",
-                        "jenkins_status": "success",
-                        "jenkins_build": "${env.BUILD_NUMBER}",
-                        "jenkins_url": "${env.BUILD_URL}"
-                      }
+                        // Generamos un JSON específico para ESTE ticket del bucle
+                        def payloadContent = """
+                        {
+                          "event_type": "jenkins-test-finished",
+                          "client_payload": {
+                            "jira_issue": "${issueKey}",
+                            "jenkins_status": "success",
+                            "jenkins_build": "${env.BUILD_NUMBER}",
+                            "jenkins_url": "${env.BUILD_URL}"
+                          }
+                        }
+                        """
+
+                        // Guardamos el archivo (se sobrescribe en cada vuelta, no pasa nada)
+                        writeFile file: 'payload.json', text: payloadContent
+
+                        // Enviamos la señal a GitHub para ESTE ticket
+                        bat '''
+                            curl --ssl-no-revoke -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token %GITHUB_TOKEN%" https://api.github.com/repos/CMedina2023/Integaci-n-jira/dispatches -d @payload.json
+                        '''
+
+                        // Pequeña pausa de seguridad para no saturar si son muchos
+                        sleep 1
                     }
-                    """
-                    writeFile file: 'payload.json', text: payloadContent
 
-                    bat '''
-                        curl --ssl-no-revoke -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token %GITHUB_TOKEN%" https://api.github.com/repos/CMedina2023/Integaci-n-jira/dispatches -d @payload.json
-                    '''
-                    
                 } else {
-                    echo "⚠️ No se encontró ID de Jira en el commit. No se envía nada."
+                    echo "⚠️ No se encontraron IDs de Jira en el commit."
                 }
             }
         }
