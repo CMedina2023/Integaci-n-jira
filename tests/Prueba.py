@@ -68,7 +68,8 @@ def test_duckduckgo_search():
         termino = "Automatización con Python Selenium"
         search_box.send_keys(termino)
         search_box.send_keys(Keys.RETURN)
-        print(f"✓ Búsqueda realizadaa: '{termino}'")
+        print(f"✓ Búsqueda realizada: '{termino}'")
+        print ("Nuevo mensaje")
 
         # 4. Esperar y verificar resultados
         time.sleep(3)
