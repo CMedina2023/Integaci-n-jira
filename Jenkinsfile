@@ -4,18 +4,19 @@ pipeline {
     stages {
         stage('Instalar Dependencias') {
             steps {
-                // El requirements.txt parece estar en la raíz según tu imagen,
-                // así que lo ejecutamos normal.
+                // Instala las librerías necesarias (selenium)
+                // Asume que requirements.txt está en la carpeta principal
                 bat 'pip install -r requirements.txt'
             }
         }
         
         stage('Ejecutar Test') {
             steps {
-                // El comando 'dir' es la forma segura de Jenkins para "entrar" a una carpeta
+                // Le decimos a Jenkins que entre a la carpeta 'tests'
                 dir('tests') {
-                    // Ahora que estamos dentro de 'tests', corremos el script
-                    bat 'python prueba.py'
+                    // 1. set PYTHONIOENCODING=utf-8: Arregla el error de los emojis
+                    // 2. python prueba.py: Ejecuta tu script original sin cambios
+                    bat 'set PYTHONIOENCODING=utf-8 && python prueba.py'
                 }
             }
         }
