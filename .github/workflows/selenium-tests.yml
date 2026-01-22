@@ -3,12 +3,10 @@ name: Selenium Tests
 on:
   push:
     branches:
-      - master
       - develop
       - 'feature/**'
   pull_request:
     branches:
-      - master
       - develop
 
 jobs:

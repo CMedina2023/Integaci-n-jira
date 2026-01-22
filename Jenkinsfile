@@ -25,9 +25,9 @@ pipeline {
             script {
                 echo '✅ Pruebas exitosas. Iniciando conexión con GitHub...'
                 
-                // 1. OBTENER MENSAJE DEL COMMIT (Versión Windows)
-                // Usamos @ para que no imprima el comando, solo el resultado
-                def commitMsg = bat(returnStdout: true, script: '@git log -1 --pretty=%B').trim()
+                // --- CORRECCIÓN AQUÍ ---
+                // Usamos %%B en lugar de %B para que Windows respete el símbolo
+                def commitMsg = bat(returnStdout: true, script: '@git log -1 --pretty=%%B').trim()
                 echo "Mensaje analizado: ${commitMsg}"
                 
                 // 2. BUSCAR TICKET (Ej: IN-4)
@@ -37,14 +37,13 @@ pipeline {
                     def JIRA_ISSUE = matcher[0]
                     echo "🎫 Ticket detectado: ${JIRA_ISSUE}"
                     
-                    // 3. CREAR EL JSON (Versión segura para Windows)
-                    // Escribimos el contenido en un archivo para evitar errores de comillas en la consola CMD
+                    // 3. CREAR EL JSON
                     def payloadContent = """
                     {
                       "event_type": "jenkins-test-finished",
                       "client_payload": {
                         "jira_issue": "${JIRA_ISSUE}",
-                        "jenkins_status": "EXITOSO",
+                        "jenkins_status": "success",
                         "jenkins_build": "${env.BUILD_NUMBER}",
                         "jenkins_url": "${env.BUILD_URL}"
                       }
@@ -53,8 +52,6 @@ pipeline {
                     writeFile file: 'payload.json', text: payloadContent
                     
                     // 4. ENVIAR A GITHUB
-                    // Usamos '@payload.json' para decirle a curl que lea del archivo
-                    // %GITHUB_TOKEN% usa la variable de entorno de forma segura en Windows
                     bat '''
                         curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: token %GITHUB_TOKEN%" https://api.github.com/repos/CMedina2023/Integaci-n-jira/dispatches -d @payload.json
                     '''
