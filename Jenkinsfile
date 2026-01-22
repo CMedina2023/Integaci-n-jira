@@ -1,18 +1,22 @@
 pipeline {
-    agent any 
+    agent any
 
     stages {
         stage('Instalar Dependencias') {
             steps {
-                // Instala selenium en el entorno local
+                // El requirements.txt parece estar en la raíz según tu imagen,
+                // así que lo ejecutamos normal.
                 bat 'pip install -r requirements.txt'
             }
         }
         
         stage('Ejecutar Test') {
             steps {
-                // Ejecuta el script
-                bat 'python test_google.py'
+                // El comando 'dir' es la forma segura de Jenkins para "entrar" a una carpeta
+                dir('tests') {
+                    // Ahora que estamos dentro de 'tests', corremos el script
+                    bat 'python prueba.py'
+                }
             }
         }
     }
