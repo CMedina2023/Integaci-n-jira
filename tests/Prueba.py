@@ -69,7 +69,7 @@ def test_duckduckgo_search():
         search_box.send_keys(termino)
         search_box.send_keys(Keys.RETURN)
         print(f"✓ Búsqueda realizada: '{termino}'")
-        print ("Nuevo mensaje")
+        print ("Cambio de mensaje")
 
         # 4. Esperar y verificar resultados
         time.sleep(3)
